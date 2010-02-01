@@ -1,0 +1,26 @@
+##############################################################################
+#
+# This file defines the Vorne internal version numbers for the boost library.
+#
+# It is intended to be included by a larger Makefile, or parsed directly by a 
+# tool.
+#
+# $Id: Makefile.version 1.1 2008/10/28 16:45:29Z phowell Exp $
+#
+# This file does not have a version history, since it usually consists of 
+# 'incremented version number' or something similar.  The revision history
+# may be viewed in source control.
+# 
+##############################################################################
+
+LONG_VERSION = 0.4.0.1
+SHORT_VERSION = 0.4.0
+RELEASE_VERSION = 00.04.01
+
+checkpoint:
+	pj label boost-internal-$(LONG_VERSION)
+	pj checkpoint -N boost-internal-$(LONG_VERSION)
+
+.PHONY: checkpoint
+
+
