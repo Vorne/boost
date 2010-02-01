@@ -5,7 +5,7 @@
 # It is intended to be included by a larger Makefile, or parsed directly by a 
 # tool.
 #
-# $Id: Makefile.version 1.1 2008/10/28 16:45:29Z phowell Exp $
+# $Id: Makefile.version 1.2 2008/12/10 18:10:56Z phowell Exp $
 #
 # This file does not have a version history, since it usually consists of 
 # 'incremented version number' or something similar.  The revision history
@@ -13,9 +13,9 @@
 # 
 ##############################################################################
 
-LONG_VERSION = 0.4.0.1
+LONG_VERSION = 0.4.0.2
 SHORT_VERSION = 0.4.0
-RELEASE_VERSION = 00.04.01
+RELEASE_VERSION = 00.04.02
 
 checkpoint:
 	pj label boost-internal-$(LONG_VERSION)
