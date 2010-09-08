@@ -13,9 +13,9 @@
 # 
 ##############################################################################
 
-LONG_VERSION = 0.4.0.2
-SHORT_VERSION = 0.4.0
-RELEASE_VERSION = 00.04.02
+LONG_VERSION = 0.7.0.8
+SHORT_VERSION = 0.7.0
+RELEASE_VERSION = 00.07.08
 
 checkpoint:
 	pj label boost-internal-$(LONG_VERSION)

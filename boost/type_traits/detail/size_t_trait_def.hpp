@@ -7,9 +7,9 @@
 // (See accompanying file LICENSE_1_0.txt or copy at 
 // http://www.boost.org/LICENSE_1_0.txt)
 
-// $Source: O:/Eng/ARM Firmware/boost/boost/type_traits/detail/rcs/size_t_trait_def.hpp $
-// $Date: 2008/10/10 00:19:23Z $
-// $Revision: 1.1 $
+// $Source$
+// $Date: 2005-08-25 12:27:28 -0400 (Thu, 25 Aug 2005) $
+// $Revision: 30670 $
 
 #include <boost/type_traits/detail/template_arity_spec.hpp>
 #include <boost/type_traits/integral_constant.hpp>
