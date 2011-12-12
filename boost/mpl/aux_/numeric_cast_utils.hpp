@@ -10,9 +10,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: O:/Eng/ARM Firmware/boost/boost/mpl/aux_/rcs/numeric_cast_utils.hpp $
-// $Date: 2008/10/10 00:06:14Z $
-// $Revision: 1.1 $
+// $Id: numeric_cast_utils.hpp 49267 2008-10-11 06:19:02Z agurtovoy $
+// $Date: 2008-10-11 02:19:02 -0400 (Sat, 11 Oct 2008) $
+// $Revision: 49267 $
 
 #include <boost/mpl/numeric_cast.hpp>
 #include <boost/mpl/apply_wrap.hpp>

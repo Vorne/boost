@@ -10,9 +10,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: O:/Eng/ARM Firmware/boost/boost/mpl/rcs/greater.hpp $
-// $Date: 2008/10/10 00:13:25Z $
-// $Revision: 1.1 $
+// $Id: greater.hpp 49267 2008-10-11 06:19:02Z agurtovoy $
+// $Date: 2008-10-11 02:19:02 -0400 (Sat, 11 Oct 2008) $
+// $Revision: 49267 $
 
 #define AUX778076_OP_NAME greater
 #define AUX778076_OP_TOKEN >

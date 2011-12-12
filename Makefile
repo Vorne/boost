@@ -1,10 +1,13 @@
 ##############################################################################
 #
 # This is a dummy Makefile.  It may be extended later if we need to actually
-# compile any boost code; for now, it just includes Makefile.version so that
+# compile any boost code; for now, it just includes the base Makefile so that
 # we can checkpoint the project.
 #
 ##############################################################################
 
--include Makefile.version
+BUILD_DIR ?= ../build-internal
+PROJECT_DIR = .
+
+include $(BUILD_DIR)/Makefile.base.mk
 

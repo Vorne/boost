@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga  2007
+// (C) Copyright Ion Gaztanaga  2007-2009
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -15,6 +15,8 @@
 #include <boost/intrusive/detail/config_begin.hpp>
 #include <boost/intrusive/intrusive_fwd.hpp>
 #include <boost/intrusive/splaytree.hpp>
+#include <boost/intrusive/detail/mpl.hpp>
+#include <boost/move/move.hpp>
 #include <iterator>
 
 namespace boost {
@@ -31,7 +33,7 @@ namespace intrusive {
 //! \c base_hook<>/member_hook<>/value_traits<>,
 //! \c constant_time_size<>, \c size_type<> and
 //! \c compare<>.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
@@ -41,12 +43,8 @@ class splay_set_impl
    /// @cond
    typedef splaytree_impl<Config> tree_type;
    //! This class is
-   //! non-copyable
-   splay_set_impl (const splay_set_impl&);
-
-   //! This class is
-   //! non-assignable
-   splay_set_impl &operator =(const splay_set_impl&);
+   //! movable
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(splay_set_impl)
 
    typedef tree_type implementation_defined;
    /// @endcond
@@ -72,6 +70,8 @@ class splay_set_impl
    typedef typename implementation_defined::node_ptr                 node_ptr;
    typedef typename implementation_defined::const_node_ptr           const_node_ptr;
    typedef typename implementation_defined::node_algorithms          node_algorithms;
+
+   static const bool constant_time_size = Config::constant_time_size;
 
    /// @cond
    private:
@@ -109,6 +109,17 @@ class splay_set_impl
            , const value_traits &v_traits = value_traits())
       : tree_(true, b, e, cmp, v_traits)
    {}
+
+   //! <b>Effects</b>: to-do
+   //!   
+   splay_set_impl(BOOST_RV_REF(splay_set_impl) x) 
+      :  tree_(::boost::move(x.tree_))
+   {}
+
+   //! <b>Effects</b>: to-do
+   //!   
+   splay_set_impl& operator=(BOOST_RV_REF(splay_set_impl) x) 
+   {  tree_ = ::boost::move(x.tree_);  return *this;  }
 
    //! <b>Effects</b>: Detaches all elements from this. The objects in the splay_set 
    //!   are not deleted (i.e. no destructors are called).
@@ -296,7 +307,7 @@ class splay_set_impl
    value_compare value_comp() const
    { return tree_.value_comp(); }
 
-   //! <b>Effects</b>: Returns true is the container is empty.
+   //! <b>Effects</b>: Returns true if the container is empty.
    //! 
    //! <b>Complexity</b>: Constant.
    //! 
@@ -323,18 +334,19 @@ class splay_set_impl
    { tree_.swap(other.tree_); }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
+   //!   Cloner should yield to nodes equivalent to the original nodes.
    //!
    //! <b>Effects</b>: Erases all the elements from *this
    //!   calling Disposer::operator()(pointer), clones all the 
    //!   elements from src calling Cloner::operator()(const_reference )
-   //!   and inserts them on *this.
+   //!   and inserts them on *this. Copies the predicate from the source container.
    //!
    //!   If cloner throws, all cloned elements are unlinked and disposed
    //!   calling Disposer::operator()(pointer).
    //!   
    //! <b>Complexity</b>: Linear to erased plus inserted elements.
    //! 
-   //! <b>Throws</b>: If cloner throws.
+   //! <b>Throws</b>: If cloner throws or predicate copy assignment throws. Basic guarantee.
    template <class Cloner, class Disposer>
    void clone_from(const splay_set_impl &src, Cloner cloner, Disposer disposer)
    {  tree_.clone_from(src.tree_, cloner, disposer);  }
@@ -496,7 +508,7 @@ class splay_set_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator i)
+   iterator erase(const_iterator i)
    {  return tree_.erase(i);  }
 
    //! <b>Effects</b>: Erases the range pointed to by b end e. 
@@ -510,7 +522,7 @@ class splay_set_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator b, iterator e)
+   iterator erase(const_iterator b, const_iterator e)
    {  return tree_.erase(b, e);  }
 
    //! <b>Effects</b>: Erases all the elements with the given value.
@@ -538,7 +550,11 @@ class splay_set_impl
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
    template<class KeyType, class KeyValueCompare>
-   size_type erase(const KeyType& key, KeyValueCompare comp)
+   size_type erase(const KeyType& key, KeyValueCompare comp
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {  return tree_.erase(key, comp);  }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -555,8 +571,14 @@ class splay_set_impl
    //! <b>Note</b>: Invalidates the iterators 
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator i, Disposer disposer)
+   iterator erase_and_dispose(const_iterator i, Disposer disposer)
    {  return tree_.erase_and_dispose(i, disposer);  }
+
+   #if !defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
+   template<class Disposer>
+   iterator erase_and_dispose(iterator i, Disposer disposer)
+   {  return this->erase_and_dispose(const_iterator(i), disposer);   }
+   #endif
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
    //!
@@ -573,7 +595,7 @@ class splay_set_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator b, iterator e, Disposer disposer)
+   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer)
    {  return tree_.erase_and_dispose(b, e, disposer);  }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -608,7 +630,11 @@ class splay_set_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class KeyType, class KeyValueCompare, class Disposer>
-   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer)
+   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {  return tree_.erase_and_dispose(key, comp, disposer);  }
 
    //! <b>Effects</b>: Erases all the elements of the container.
@@ -1072,65 +1098,65 @@ class splay_set_impl
    /// @endcond
 };
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator!=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splay_set_impl<T, Options...> &x, const splay_set_impl<T, Options...> &y)
 #else
 (const splay_set_impl<Config> &x, const splay_set_impl<Config> &y)
 #endif
 {  return !(x == y); }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splay_set_impl<T, Options...> &x, const splay_set_impl<T, Options...> &y)
 #else
 (const splay_set_impl<Config> &x, const splay_set_impl<Config> &y)
 #endif
 {  return y < x;  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator<=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splay_set_impl<T, Options...> &x, const splay_set_impl<T, Options...> &y)
 #else
 (const splay_set_impl<Config> &x, const splay_set_impl<Config> &y)
 #endif
 {  return !(y < x);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splay_set_impl<T, Options...> &x, const splay_set_impl<T, Options...> &y)
 #else
 (const splay_set_impl<Config> &x, const splay_set_impl<Config> &y)
 #endif
 {  return !(x < y);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline void swap
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (splay_set_impl<T, Options...> &x, splay_set_impl<T, Options...> &y)
 #else
 (splay_set_impl<Config> &x, splay_set_impl<Config> &y)
@@ -1139,7 +1165,7 @@ inline void swap
 
 //! Helper metafunction to define a \c splay_set that yields to the same type when the
 //! same options (either explicitly or implicitly) are used.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class ...Options>
 #else
 template<class T, class O1 = none, class O2 = none
@@ -1149,19 +1175,42 @@ struct make_splay_set
 {
    /// @cond
    typedef splay_set_impl
-      < typename make_splaytree_opt<T, O1, O2, O3, O4>::type
+      < typename make_splaytree_opt<T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+         >::type
       > implementation_defined;
    /// @endcond
    typedef implementation_defined type;
 };
 
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class O1, class O2, class O3, class O4>
+#else
+template<class T, class ...Options>
+#endif
 class splay_set
-   :  public make_splay_set<T, O1, O2, O3, O4>::type
+   :  public make_splay_set<T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type
 {
    typedef typename make_splay_set
-      <T, O1, O2, O3, O4>::type   Base;
+      <T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type   Base;
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(splay_set)
 
    public:
    typedef typename Base::value_compare      value_compare;
@@ -1183,6 +1232,13 @@ class splay_set
       , const value_traits &v_traits = value_traits())
       :  Base(b, e, cmp, v_traits)
    {}
+
+   splay_set(BOOST_RV_REF(splay_set) x)
+      :  Base(::boost::move(static_cast<Base&>(x)))
+   {}
+
+   splay_set& operator=(BOOST_RV_REF(splay_set) x)
+   {  this->Base::operator=(::boost::move(static_cast<Base&>(x))); return *this;  }
 
    static splay_set &container_from_end_iterator(iterator end_iterator)
    {  return static_cast<splay_set &>(Base::container_from_end_iterator(end_iterator));   }
@@ -1210,7 +1266,7 @@ class splay_set
 //! \c base_hook<>/member_hook<>/value_traits<>,
 //! \c constant_time_size<>, \c size_type<> and
 //! \c compare<>.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
@@ -1220,9 +1276,8 @@ class splay_multiset_impl
    /// @cond
    typedef splaytree_impl<Config> tree_type;
 
-   //Non-copyable and non-assignable
-   splay_multiset_impl (const splay_multiset_impl&);
-   splay_multiset_impl &operator =(const splay_multiset_impl&);
+   //Movable
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(splay_multiset_impl)
    typedef tree_type implementation_defined;
    /// @endcond
 
@@ -1247,6 +1302,8 @@ class splay_multiset_impl
    typedef typename implementation_defined::node_ptr                 node_ptr;
    typedef typename implementation_defined::const_node_ptr           const_node_ptr;
    typedef typename implementation_defined::node_algorithms          node_algorithms;
+
+   static const bool constant_time_size = Config::constant_time_size;
 
    /// @cond
    private:
@@ -1284,6 +1341,17 @@ class splay_multiset_impl
                 , const value_traits &v_traits = value_traits())
       : tree_(false, b, e, cmp, v_traits)
    {}
+
+   //! <b>Effects</b>: to-do
+   //!   
+   splay_multiset_impl(BOOST_RV_REF(splay_multiset_impl) x) 
+      :  tree_(::boost::move(x.tree_))
+   {}
+
+   //! <b>Effects</b>: to-do
+   //!   
+   splay_multiset_impl& operator=(BOOST_RV_REF(splay_multiset_impl) x) 
+   {  tree_ = ::boost::move(x.tree_);  return *this;  }
 
    //! <b>Effects</b>: Detaches all elements from this. The objects in the set 
    //!   are not deleted (i.e. no destructors are called).
@@ -1471,7 +1539,7 @@ class splay_multiset_impl
    value_compare value_comp() const
    { return tree_.value_comp(); }
 
-   //! <b>Effects</b>: Returns true is the container is empty.
+   //! <b>Effects</b>: Returns true if the container is empty.
    //! 
    //! <b>Complexity</b>: Constant.
    //! 
@@ -1498,18 +1566,19 @@ class splay_multiset_impl
    { tree_.swap(other.tree_); }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
+   //!   Cloner should yield to nodes equivalent to the original nodes.
    //!
    //! <b>Effects</b>: Erases all the elements from *this
    //!   calling Disposer::operator()(pointer), clones all the 
    //!   elements from src calling Cloner::operator()(const_reference )
-   //!   and inserts them on *this.
+   //!   and inserts them on *this. Copies the predicate from the source container.
    //!
    //!   If cloner throws, all cloned elements are unlinked and disposed
    //!   calling Disposer::operator()(pointer).
    //!   
    //! <b>Complexity</b>: Linear to erased plus inserted elements.
    //! 
-   //! <b>Throws</b>: If cloner throws. Basic guarantee.
+   //! <b>Throws</b>: If cloner throws or predicate copy assignment throws. Basic guarantee.
    template <class Cloner, class Disposer>
    void clone_from(const splay_multiset_impl &src, Cloner cloner, Disposer disposer)
    {  tree_.clone_from(src.tree_, cloner, disposer);  }
@@ -1578,7 +1647,7 @@ class splay_multiset_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator i)
+   iterator erase(const_iterator i)
    {  return tree_.erase(i);  }
 
    //! <b>Effects</b>: Erases the range pointed to by b end e. 
@@ -1592,7 +1661,7 @@ class splay_multiset_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator b, iterator e)
+   iterator erase(const_iterator b, const_iterator e)
    {  return tree_.erase(b, e);  }
 
    //! <b>Effects</b>: Erases all the elements with the given value.
@@ -1620,7 +1689,11 @@ class splay_multiset_impl
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
    template<class KeyType, class KeyValueCompare>
-   size_type erase(const KeyType& key, KeyValueCompare comp)
+   size_type erase(const KeyType& key, KeyValueCompare comp
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {  return tree_.erase(key, comp);  }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -1637,8 +1710,14 @@ class splay_multiset_impl
    //! <b>Note</b>: Invalidates the iterators 
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator i, Disposer disposer)
+   iterator erase_and_dispose(const_iterator i, Disposer disposer)
    {  return tree_.erase_and_dispose(i, disposer);  }
+
+   #if !defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
+   template<class Disposer>
+   iterator erase_and_dispose(iterator i, Disposer disposer)
+   {  return this->erase_and_dispose(const_iterator(i), disposer);   }
+   #endif
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
    //!
@@ -1655,7 +1734,7 @@ class splay_multiset_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator b, iterator e, Disposer disposer)
+   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer)
    {  return tree_.erase_and_dispose(b, e, disposer);  }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -1690,7 +1769,11 @@ class splay_multiset_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class KeyType, class KeyValueCompare, class Disposer>
-   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer)
+   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {  return tree_.erase_and_dispose(key, comp, disposer);  }
 
    //! <b>Effects</b>: Erases all the elements of the container.
@@ -2154,65 +2237,65 @@ class splay_multiset_impl
    /// @endcond
 };
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator!=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splay_multiset_impl<T, Options...> &x, const splay_multiset_impl<T, Options...> &y)
 #else
 (const splay_multiset_impl<Config> &x, const splay_multiset_impl<Config> &y)
 #endif
 {  return !(x == y); }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splay_multiset_impl<T, Options...> &x, const splay_multiset_impl<T, Options...> &y)
 #else
 (const splay_multiset_impl<Config> &x, const splay_multiset_impl<Config> &y)
 #endif
 {  return y < x;  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator<=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splay_multiset_impl<T, Options...> &x, const splay_multiset_impl<T, Options...> &y)
 #else
 (const splay_multiset_impl<Config> &x, const splay_multiset_impl<Config> &y)
 #endif
 {  return !(y < x);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splay_multiset_impl<T, Options...> &x, const splay_multiset_impl<T, Options...> &y)
 #else
 (const splay_multiset_impl<Config> &x, const splay_multiset_impl<Config> &y)
 #endif
 {  return !(x < y);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline void swap
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (splay_multiset_impl<T, Options...> &x, splay_multiset_impl<T, Options...> &y)
 #else
 (splay_multiset_impl<Config> &x, splay_multiset_impl<Config> &y)
@@ -2221,7 +2304,7 @@ inline void swap
 
 //! Helper metafunction to define a \c splay_multiset that yields to the same type when the
 //! same options (either explicitly or implicitly) are used.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class ...Options>
 #else
 template<class T, class O1 = none, class O2 = none
@@ -2231,19 +2314,43 @@ struct make_splay_multiset
 {
    /// @cond
    typedef splay_multiset_impl
-      < typename make_splaytree_opt<T, O1, O2, O3, O4>::type
+      < typename make_splaytree_opt<T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+         >::type
       > implementation_defined;
    /// @endcond
    typedef implementation_defined type;
 };
 
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+
+#if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class O1, class O2, class O3, class O4>
+#else
+template<class T, class ...Options>
+#endif
 class splay_multiset
-   :  public make_splay_multiset<T, O1, O2, O3, O4>::type
+   :  public make_splay_multiset<T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type
 {
    typedef typename make_splay_multiset
-      <T, O1, O2, O3, O4>::type   Base;
+      <T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type   Base;
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(splay_multiset)
 
    public:
    typedef typename Base::value_compare      value_compare;
@@ -2265,6 +2372,13 @@ class splay_multiset
            , const value_traits &v_traits = value_traits())
       :  Base(b, e, cmp, v_traits)
    {}
+
+   splay_multiset(BOOST_RV_REF(splay_multiset) x)
+      :  Base(::boost::move(static_cast<Base&>(x)))
+   {}
+
+   splay_multiset& operator=(BOOST_RV_REF(splay_multiset) x)
+   {  this->Base::operator=(::boost::move(static_cast<Base&>(x))); return *this;  }
 
    static splay_multiset &container_from_end_iterator(iterator end_iterator)
    {  return static_cast<splay_multiset &>(Base::container_from_end_iterator(end_iterator));   }

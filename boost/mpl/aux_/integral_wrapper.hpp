@@ -7,9 +7,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: O:/Eng/ARM Firmware/boost/boost/mpl/aux_/rcs/integral_wrapper.hpp $
-// $Date: 2008/10/10 00:06:03Z $
-// $Revision: 1.1 $
+// $Id: integral_wrapper.hpp 49267 2008-10-11 06:19:02Z agurtovoy $
+// $Date: 2008-10-11 02:19:02 -0400 (Sat, 11 Oct 2008) $
+// $Revision: 49267 $
 
 // NO INCLUDE GUARDS, THE HEADER IS INTENDED FOR MULTIPLE INCLUSION!
 

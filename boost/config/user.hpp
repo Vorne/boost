@@ -13,15 +13,11 @@
 //  configuration policy:
 //
 
-// define BOOST_NO_USER_CONFIG to ignore this file
-#ifndef BOOST_NO_USER_CONFIG
-
 // define this to locate a compiler config file:
-#define BOOST_COMPILER_CONFIG <armcc_config.h>
-
-// define this to locate a stdlib config file:
-#define BOOST_STDLIB_CONFIG   <boost/config/stdlib/roguewave.hpp>
-
+#ifdef TOOLSET_arm
+#define BOOST_COMPILER_CONFIG  <armcc_config.h>
+#define BOOST_STDLIB_CONFIG    <boost/config/stdlib/roguewave.hpp>
+#endif
 // define this to locate a platform config file:
 // #define BOOST_PLATFORM_CONFIG <myheader>
 
@@ -124,4 +120,4 @@
 // #define BOOST_WHATEVER_NO_LIB
  
 
-#endif
+

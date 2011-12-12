@@ -11,9 +11,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: O:/Eng/ARM Firmware/boost/boost/mpl/set/aux_/rcs/insert_impl.hpp $
-// $Date: 2008/10/10 00:14:57Z $
-// $Revision: 1.1 $
+// $Id: insert_impl.hpp 49267 2008-10-11 06:19:02Z agurtovoy $
+// $Date: 2008-10-11 02:19:02 -0400 (Sat, 11 Oct 2008) $
+// $Revision: 49267 $
 
 #include <boost/mpl/insert_fwd.hpp>
 #include <boost/mpl/set/aux_/has_key_impl.hpp>

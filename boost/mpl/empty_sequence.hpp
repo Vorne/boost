@@ -11,9 +11,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: O:/Eng/ARM Firmware/boost/boost/mpl/rcs/empty_sequence.hpp $
-// $Date: 2008/10/10 00:13:17Z $
-// $Revision: 1.1 $
+// $Id: empty_sequence.hpp 49267 2008-10-11 06:19:02Z agurtovoy $
+// $Date: 2008-10-11 02:19:02 -0400 (Sat, 11 Oct 2008) $
+// $Revision: 49267 $
 
 #include <boost/mpl/size_fwd.hpp>
 #include <boost/mpl/int.hpp>

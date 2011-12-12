@@ -11,9 +11,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source: O:/Eng/ARM Firmware/boost/boost/mpl/map/aux_/rcs/begin_end_impl.hpp $
-// $Date: 2008/10/10 00:14:06Z $
-// $Revision: 1.1 $
+// $Id: begin_end_impl.hpp 49267 2008-10-11 06:19:02Z agurtovoy $
+// $Date: 2008-10-11 02:19:02 -0400 (Sat, 11 Oct 2008) $
+// $Revision: 49267 $
 
 #include <boost/mpl/begin_end_fwd.hpp>
 #include <boost/mpl/next_prior.hpp>

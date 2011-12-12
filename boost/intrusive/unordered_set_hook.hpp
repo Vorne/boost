@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Olaf Krzikalla 2004-2006.
-// (C) Copyright Ion Gaztanaga  2006-2007
+// (C) Copyright Ion Gaztanaga  2006-2009
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -16,6 +16,7 @@
 
 #include <boost/intrusive/detail/config_begin.hpp>
 #include <boost/intrusive/intrusive_fwd.hpp>
+#include <boost/pointer_cast.hpp>
 #include <boost/intrusive/detail/utilities.hpp>
 #include <boost/intrusive/detail/pointer_to_other.hpp>
 #include <boost/intrusive/slist_hook.hpp>
@@ -76,7 +77,12 @@ struct unordered_node_traits
    static const bool optimize_multikey = OptimizeMultiKey;
 
    static node_ptr get_next(const_node_ptr n)
-   {  return node_ptr(&static_cast<node &>(*n->next_));  }
+   {
+//      This still fails in gcc < 4.4 so forget about it
+//      using ::boost::static_pointer_cast;
+//      return static_pointer_cast<node>(n->next_);
+      return node_ptr(&static_cast<node&>(*n->next_));
+   }
 
    static void set_next(node_ptr n, node_ptr next)
    {  n->next_ = next;  }
@@ -153,7 +159,7 @@ struct get_uset_node_algo
 
 //! Helper metafunction to define a \c unordered_set_base_hook that yields to the same
 //! type when the same options (either explicitly or implicitly) are used.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class ...Options>
 #else
 template<class O1 = none, class O2 = none, class O3 = none, class O4 = none>
@@ -162,7 +168,13 @@ struct make_unordered_set_base_hook
 {
    /// @cond
    typedef typename pack_options
-      < hook_defaults, O1, O2, O3, O4>::type packed_options;
+      < hook_defaults, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type packed_options;
 
    typedef detail::generic_hook
    < get_uset_node_algo<typename packed_options::void_pointer
@@ -201,15 +213,22 @@ struct make_unordered_set_base_hook
 //! \c optimize_multikey<> will tell the hook to store a link to form a group
 //! with other value with the same value to speed up searches and insertions
 //! in unordered_multisets with a great number of with equivalent keys.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class ...Options>
 #else
 template<class O1, class O2, class O3, class O4>
 #endif
 class unordered_set_base_hook
-   :  public make_unordered_set_base_hook<O1, O2, O3, O4>::type
+   :  public make_unordered_set_base_hook<
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type
 {
-   #ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+   #if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
+   public:
    //! <b>Effects</b>: If link_mode is \c auto_unlink or \c safe_link
    //!   initializes the node to an unlinked state.
    //! 
@@ -279,7 +298,7 @@ class unordered_set_base_hook
 
 //! Helper metafunction to define a \c unordered_set_member_hook that yields to the same
 //! type when the same options (either explicitly or implicitly) are used.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class ...Options>
 #else
 template<class O1 = none, class O2 = none, class O3 = none, class O4 = none>
@@ -288,7 +307,13 @@ struct make_unordered_set_member_hook
 {
    /// @cond
    typedef typename pack_options
-      < hook_defaults, O1, O2, O3, O4>::type packed_options;
+      < hook_defaults, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type packed_options;
 
    typedef detail::generic_hook
    < get_uset_node_algo< typename packed_options::void_pointer
@@ -318,15 +343,22 @@ struct make_unordered_set_member_hook
 //!
 //! \c store_hash<> will tell the hook to store the hash of the value
 //! to speed up rehashings.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class ...Options>
 #else
 template<class O1, class O2, class O3, class O4>
 #endif
 class unordered_set_member_hook
-   :  public make_unordered_set_member_hook<O1, O2, O3, O4>::type
+   :  public make_unordered_set_member_hook<
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+   >::type
 {
-   #ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+   #if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
+   public:
    //! <b>Effects</b>: If link_mode is \c auto_unlink or \c safe_link
    //!   initializes the node to an unlinked state.
    //! 
