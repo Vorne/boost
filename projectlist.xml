@@ -1,6 +1,0 @@
-<!-- This XML file describes all the projects this project depends on, along with the version of that
-project currently in use.  See ../build-internal/projectlist.xml for more information  -->
-
-<project-list>
-    <project type="build" version="0.7.0.1" name="build-internal" tag="build-internal" location="https://server:8555/svn/common/build" />
-</project-list>
