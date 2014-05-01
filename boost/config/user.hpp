@@ -14,10 +14,11 @@
 //
 
 // define this to locate a compiler config file:
-#ifdef TOOLSET_arm
-#define BOOST_COMPILER_CONFIG  <armcc_config.h>
-#define BOOST_STDLIB_CONFIG    <boost/config/stdlib/roguewave.hpp>
-#endif
+// #define BOOST_COMPILER_CONFIG <myheader>
+
+// define this to locate a stdlib config file:
+// #define BOOST_STDLIB_CONFIG   <myheader>
+
 // define this to locate a platform config file:
 // #define BOOST_PLATFORM_CONFIG <myheader>
 
