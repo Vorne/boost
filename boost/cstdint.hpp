@@ -41,7 +41,10 @@
 // so we disable use of stdint.h when GLIBC does not define __GLIBC_HAVE_LONG_LONG.
 // See https://svn.boost.org/trac/boost/ticket/3548 and http://sources.redhat.com/bugzilla/show_bug.cgi?id=10990
 //
-#if defined(BOOST_HAS_STDINT_H) && (!defined(__GLIBC__) || defined(__GLIBC_HAVE_LONG_LONG))
+#if defined(BOOST_HAS_STDINT_H)					\
+  && (!defined(__GLIBC__)					\
+      || defined(__GLIBC_HAVE_LONG_LONG)			\
+      || (defined(__GLIBC__) && ((__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 17)))))
 
 // The following #include is an implementation artifact; not part of interface.
 # ifdef __hpux
@@ -358,6 +361,40 @@ namespace boost
 
 #endif // BOOST_HAS_STDINT_H
 
+// intptr_t/uintptr_t are defined separately because they are optional and not universally available
+#if defined(BOOST_WINDOWS) && !defined(_WIN32_WCE) && !defined(BOOST_HAS_STDINT_H)
+// Older MSVC don't have stdint.h and have intptr_t/uintptr_t defined in stddef.h
+#include <stddef.h>
+#endif
+
+// PGI seems to not support intptr_t/uintptr_t properly. BOOST_HAS_STDINT_H is not defined for this compiler by Boost.Config.
+#if !defined(__PGIC__)
+
+#if (defined(BOOST_WINDOWS) && !defined(_WIN32_WCE)) \
+    || (defined(_XOPEN_UNIX) && (_XOPEN_UNIX+0 > 0) && !defined(__UCLIBC__)) \
+    || defined(__CYGWIN__) \
+    || defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__) \
+    || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+
+namespace boost {
+    using ::intptr_t;
+    using ::uintptr_t;
+}
+#define BOOST_HAS_INTPTR_T
+
+// Clang pretends to be GCC, so it'll match this condition
+#elif defined(__GNUC__) && defined(__INTPTR_TYPE__) && defined(__UINTPTR_TYPE__)
+
+namespace boost {
+    typedef __INTPTR_TYPE__ intptr_t;
+    typedef __UINTPTR_TYPE__ uintptr_t;
+}
+#define BOOST_HAS_INTPTR_T
+
+#endif
+
+#endif // !defined(__PGIC__)
+
 #endif // BOOST_CSTDINT_HPP
 
 
@@ -491,16 +528,14 @@ INT#_C macros if they're not already defined (John Maddock).
 #    error defaults not correct; you must hand modify boost/cstdint.hpp
 #  endif
 
-#  ifndef INTMAX_C
-#    ifdef BOOST_NO_INT64_T
-#      define INTMAX_C(value) INT32_C(value)
-#      define UINTMAX_C(value) UINT32_C(value)
-#    else
-#      define INTMAX_C(value) INT64_C(value)
-#      define UINTMAX_C(value) UINT64_C(value)
-#    endif
+#  ifdef BOOST_NO_INT64_T
+#   define INTMAX_C(value) INT32_C(value)
+#   define UINTMAX_C(value) UINT32_C(value)
+#  else
+#   define INTMAX_C(value) INT64_C(value)
+#   define UINTMAX_C(value) UINT64_C(value)
 #  endif
-# endif
+#endif
 # endif // Borland/Microsoft specific width suffixes
 
 #endif // INT#_C macros.
