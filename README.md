@@ -20,8 +20,8 @@ The following steps can be followed to upgrade to a new version of the Boost lib
 * Move TAR file to Boost directory (i.e., "`mv /vagrant/boost_1_64_0.tar .`").
 * Rename existing "`boost`" sub-directory (i.e., "`mv boost boost_1_57`").
 * Extract files from TAR (i.e., "`tar -xvf boost_1_64_0.tar`").
-* Rename new Boost directory to "`boost`" (i.e., "`mv boost_1_64_0/boost boost`").
-* Delete old Boost directory and TAR file (i.e., "`rm -rf boost_1_57 boost_1_64_0 boost_1_64_0.tar`").
+* Rename new Boost directory to "`boost`" (i.e., "`mv boost_1_64_0 boost`").
+* Delete old Boost directory and TAR file (i.e., "`rm -rf boost_1_57 boost_1_64_0.tar`").
 * Prepare file changes for Git commit (i.e., "`git add -A`").
 * Build and run unit tests against XL (i.e., "`sudo make -C ~/src/xl -j 8 test`") to ensure that there are no build errors and all unit tests pass.
 * Commit changes (i.e., "`git commit -m "US1799: TA6006: 1.64.0"`").
