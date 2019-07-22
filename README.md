@@ -1,3 +1,9 @@
+# Deprecated!
+
+***This repo is no longer involved in building XL since version 2.9. If you want to
+update boost, you probably want to look at
+[meta-vorne](https://github.com/Vorne/meta-vorne).***
+
 # boost
 
 This is a streamlined (for our purposes) copy of [boost][0].
